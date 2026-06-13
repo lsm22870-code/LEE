@@ -95,8 +95,35 @@ export const GetTopDangerDistrictsResponse = zod.array(GetTopDangerDistrictsResp
 
 
 /**
- * @summary Get today and tomorrow weather forecast
+ * @summary Get current real-time weather (초단기실황)
  */
+export const GetWeatherCurrentQueryParams = zod.object({
+  "district": zod.coerce.string().optional().describe('자치구명 (예: 성동구). 없으면 서울 기본 격자 사용.')
+})
+
+export const GetWeatherCurrentResponse = zod.object({
+  "temperature": zod.number().nullish(),
+  "humidity": zod.number().nullish(),
+  "windSpeed": zod.number().nullish(),
+  "windDirection": zod.string().nullish(),
+  "precipitation": zod.number().nullish(),
+  "skyCondition": zod.string().nullish(),
+  "precipitationType": zod.string().nullish(),
+  "source": zod.enum(['KMA', 'NO_KEY', 'ERROR', 'DB_FALLBACK']).describe('KMA=기상청 연동, NO_KEY=키 미등록, ERROR=연결 실패, DB_FALLBACK=샘플 데이터'),
+  "sourceMessage": zod.string(),
+  "observedAt": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get today and tomorrow weather forecast (단기예보)
+ */
+export const GetWeatherForecastQueryParams = zod.object({
+  "district": zod.coerce.string().optional().describe('자치구명 (예: 성동구)'),
+  "nx": zod.coerce.number().optional().describe('기상청 격자 X 좌표 (기본값 60)'),
+  "ny": zod.coerce.number().optional().describe('기상청 격자 Y 좌표 (기본값 127)')
+})
+
 export const GetWeatherForecastResponse = zod.object({
   "today": zod.object({
   "date": zod.string(),
@@ -114,7 +141,10 @@ export const GetWeatherForecastResponse = zod.object({
   "isHeatwave": zod.boolean(),
   "isColdwave": zod.boolean(),
   "isStrongWind": zod.boolean(),
-  "riskFactors": zod.array(zod.string()).optional()
+  "riskFactors": zod.array(zod.string()).optional(),
+  "weatherScore": zod.number().optional().describe('기상 위험 점수 (0-20)'),
+  "source": zod.enum(['KMA', 'NO_KEY', 'ERROR', 'DB_FALLBACK']).describe('KMA=기상청 연동, NO_KEY=키 미등록, ERROR=연결 실패, DB_FALLBACK=샘플 데이터'),
+  "sourceMessage": zod.string()
 }),
   "tomorrow": zod.object({
   "date": zod.string(),
@@ -132,8 +162,13 @@ export const GetWeatherForecastResponse = zod.object({
   "isHeatwave": zod.boolean(),
   "isColdwave": zod.boolean(),
   "isStrongWind": zod.boolean(),
-  "riskFactors": zod.array(zod.string()).optional()
-})
+  "riskFactors": zod.array(zod.string()).optional(),
+  "weatherScore": zod.number().optional().describe('기상 위험 점수 (0-20)'),
+  "source": zod.enum(['KMA', 'NO_KEY', 'ERROR', 'DB_FALLBACK']).describe('KMA=기상청 연동, NO_KEY=키 미등록, ERROR=연결 실패, DB_FALLBACK=샘플 데이터'),
+  "sourceMessage": zod.string()
+}),
+  "source": zod.enum(['KMA', 'NO_KEY', 'ERROR', 'DB_FALLBACK']).describe('KMA=기상청 연동, NO_KEY=키 미등록, ERROR=연결 실패, DB_FALLBACK=샘플 데이터'),
+  "sourceMessage": zod.string()
 })
 
 

@@ -6,8 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { DayForecast } from './dayForecast';
+import type { WeatherSource } from './weatherSource';
 
 export interface WeatherForecast {
   today: DayForecast;
   tomorrow: DayForecast;
+  source: WeatherSource;
+  sourceMessage: string;
 }

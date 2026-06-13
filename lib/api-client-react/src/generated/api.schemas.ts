@@ -19,6 +19,19 @@ export const RiskLevel = {
   위험: '위험',
 } as const;
 
+/**
+ * KMA=기상청 연동, NO_KEY=키 미등록, ERROR=연결 실패, DB_FALLBACK=샘플 데이터
+ */
+export type WeatherSource = typeof WeatherSource[keyof typeof WeatherSource];
+
+
+export const WeatherSource = {
+  KMA: 'KMA',
+  NO_KEY: 'NO_KEY',
+  ERROR: 'ERROR',
+  DB_FALLBACK: 'DB_FALLBACK',
+} as const;
+
 export interface TodayRiskSummary {
   /** Overall Seoul fire risk score 0-100 */
   overallScore: number;
@@ -65,6 +78,19 @@ export interface DistrictRiskDetail {
   scoreBreakdown?: ScoreBreakdown;
 }
 
+export interface WeatherCurrentResponse {
+  temperature?: number | null;
+  humidity?: number | null;
+  windSpeed?: number | null;
+  windDirection?: string | null;
+  precipitation?: number | null;
+  skyCondition?: string | null;
+  precipitationType?: string | null;
+  source: WeatherSource;
+  sourceMessage: string;
+  observedAt?: string | null;
+}
+
 export interface DayForecast {
   date: string;
   temperature: number;
@@ -82,11 +108,17 @@ export interface DayForecast {
   isColdwave: boolean;
   isStrongWind: boolean;
   riskFactors?: string[];
+  /** 기상 위험 점수 (0-20) */
+  weatherScore?: number;
+  source: WeatherSource;
+  sourceMessage: string;
 }
 
 export interface WeatherForecast {
   today: DayForecast;
   tomorrow: DayForecast;
+  source: WeatherSource;
+  sourceMessage: string;
 }
 
 export type AlertMessageTargetAudience = typeof AlertMessageTargetAudience[keyof typeof AlertMessageTargetAudience];
@@ -106,7 +138,6 @@ export interface AlertMessage {
   category: string;
   targetAudience: AlertMessageTargetAudience;
   timeRange?: string;
-  /** @nullable */
   district?: string | null;
 }
 
@@ -170,6 +201,28 @@ export interface FirefighterDashboard {
   riskTypeBreakdown: RiskTypeCount[];
   patrolRecommendations: PatrolRecommendation[];
 }
+
+export type GetWeatherCurrentParams = {
+/**
+ * 자치구명 (예: 성동구). 없으면 서울 기본 격자 사용.
+ */
+district?: string;
+};
+
+export type GetWeatherForecastParams = {
+/**
+ * 자치구명 (예: 성동구)
+ */
+district?: string;
+/**
+ * 기상청 격자 X 좌표 (기본값 60)
+ */
+nx?: number;
+/**
+ * 기상청 격자 Y 좌표 (기본값 127)
+ */
+ny?: number;
+};
 
 export type GetTodayAlertsParams = {
 userType?: GetTodayAlertsUserType;

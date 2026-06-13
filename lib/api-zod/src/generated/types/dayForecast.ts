@@ -5,6 +5,7 @@
  * Seoul 119 Fire Risk Forecast API
  * OpenAPI spec version: 0.1.0
  */
+import type { WeatherSource } from './weatherSource';
 
 export interface DayForecast {
   date: string;
@@ -23,4 +24,8 @@ export interface DayForecast {
   isColdwave: boolean;
   isStrongWind: boolean;
   riskFactors?: string[];
+  /** 기상 위험 점수 (0-20) */
+  weatherScore?: number;
+  source: WeatherSource;
+  sourceMessage: string;
 }

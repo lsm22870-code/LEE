@@ -101,11 +101,50 @@ paths:
                 items:
                   $ref: "#/components/schemas/DistrictRisk"
 
+  /weather/current:
+    get:
+      operationId: getWeatherCurrent
+      tags: [weather]
+      summary: Get current real-time weather (초단기실황)
+      parameters:
+        - name: district
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "자치구명 (예: 성동구). 없으면 서울 기본 격자 사용."
+      responses:
+        "200":
+          description: Current weather conditions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherCurrentResponse"
+
   /weather/forecast:
     get:
       operationId: getWeatherForecast
       tags: [weather]
-      summary: Get today and tomorrow weather forecast
+      summary: Get today and tomorrow weather forecast (단기예보)
+      parameters:
+        - name: district
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "자치구명 (예: 성동구)"
+        - name: nx
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: 기상청 격자 X 좌표 (기본값 60)
+        - name: ny
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: 기상청 격자 Y 좌표 (기본값 127)
       responses:
         "200":
           description: Weather forecast
@@ -238,6 +277,11 @@ components:
       type: string
       enum: [관심, 주의, 경계, 위험]
 
+    WeatherSource:
+      type: string
+      enum: [KMA, NO_KEY, ERROR, DB_FALLBACK]
+      description: "KMA=기상청 연동, NO_KEY=키 미등록, ERROR=연결 실패, DB_FALLBACK=샘플 데이터"
+
     TodayRiskSummary:
       type: object
       required: [overallScore, riskLevel, mainFireType, topRiskFactors, preventionMessage, date, highRiskDistrictCount]
@@ -333,18 +377,71 @@ components:
         regionRisk:
           type: integer
 
+    WeatherCurrentResponse:
+      type: object
+      required:
+        - source
+        - sourceMessage
+      properties:
+        temperature:
+          type: number
+          nullable: true
+        humidity:
+          type: integer
+          nullable: true
+        windSpeed:
+          type: number
+          nullable: true
+        windDirection:
+          type: string
+          nullable: true
+        precipitation:
+          type: number
+          nullable: true
+        skyCondition:
+          type: string
+          nullable: true
+        precipitationType:
+          type: string
+          nullable: true
+        source:
+          $ref: "#/components/schemas/WeatherSource"
+        sourceMessage:
+          type: string
+        observedAt:
+          type: string
+          nullable: true
+
     WeatherForecast:
       type: object
-      required: [today, tomorrow]
+      required: [today, tomorrow, source, sourceMessage]
       properties:
         today:
           $ref: "#/components/schemas/DayForecast"
         tomorrow:
           $ref: "#/components/schemas/DayForecast"
+        source:
+          $ref: "#/components/schemas/WeatherSource"
+        sourceMessage:
+          type: string
 
     DayForecast:
       type: object
-      required: [date, temperature, maxTemp, minTemp, humidity, precipitationProb, windSpeed, skyCondition, isDry, isHeatwave, isColdwave, isStrongWind]
+      required:
+        - date
+        - temperature
+        - maxTemp
+        - minTemp
+        - humidity
+        - precipitationProb
+        - windSpeed
+        - skyCondition
+        - isDry
+        - isHeatwave
+        - isColdwave
+        - isStrongWind
+        - source
+        - sourceMessage
       properties:
         date:
           type: string
@@ -380,6 +477,13 @@ components:
           type: array
           items:
             type: string
+        weatherScore:
+          type: integer
+          description: 기상 위험 점수 (0-20)
+        source:
+          $ref: "#/components/schemas/WeatherSource"
+        sourceMessage:
+          type: string
 
     AlertMessage:
       type: object
@@ -401,7 +505,8 @@ components:
         timeRange:
           type: string
         district:
-          type: ["string", "null"]
+          type: string
+          nullable: true
 
     MonthlyStatistic:
       type: object

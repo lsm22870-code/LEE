@@ -5,6 +5,7 @@ import {
   useGetWeatherForecast,
   useGetRiskByDistrict,
   getGetRiskByDistrictQueryKey,
+  WeatherSource,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
@@ -20,6 +21,10 @@ import {
   StarOff,
   ChevronRight,
   ShieldAlert,
+  Satellite,
+  Database,
+  WifiOff,
+  AlertCircle,
 } from "lucide-react";
 import { useMyDistrict } from "@/hooks/useMyDistrict";
 
@@ -54,6 +59,43 @@ function getRiskTextColor(level: RiskLevel | string) {
 
 function SkeletonCard({ className = "" }: { className?: string }) {
   return <div className={`bg-slate-200 animate-pulse rounded-2xl ${className}`} />;
+}
+
+function SourceBadge({ source, message }: { source?: string; message?: string }) {
+  if (!source) return null;
+  const configs: Record<string, { icon: React.ReactNode; label: string; className: string }> = {
+    [WeatherSource.KMA]: {
+      icon: <Satellite className="w-3 h-3" />,
+      label: "기상청 실시간",
+      className: "bg-blue-100 text-blue-700 border-blue-200",
+    },
+    [WeatherSource.NO_KEY]: {
+      icon: <WifiOff className="w-3 h-3" />,
+      label: "샘플 데이터",
+      className: "bg-slate-100 text-slate-500 border-slate-200",
+    },
+    [WeatherSource.ERROR]: {
+      icon: <AlertCircle className="w-3 h-3" />,
+      label: "연결 오류",
+      className: "bg-red-100 text-red-600 border-red-200",
+    },
+    [WeatherSource.DB_FALLBACK]: {
+      icon: <Database className="w-3 h-3" />,
+      label: "DB 캐시",
+      className: "bg-amber-100 text-amber-700 border-amber-200",
+    },
+  };
+  const cfg = configs[source];
+  if (!cfg) return null;
+  return (
+    <span
+      title={message}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-semibold ${cfg.className}`}
+    >
+      {cfg.icon}
+      {cfg.label}
+    </span>
+  );
 }
 
 const ALL_DISTRICTS = [
@@ -218,8 +260,9 @@ export default function Home() {
           <SkeletonCard className="h-44" />
         ) : weather ? (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-lg font-extrabold text-slate-900">기상 현황 & 화재 위험 기상</h3>
+              <SourceBadge source={weather.source} message={weather.sourceMessage} />
             </div>
             <div className="grid grid-cols-2 gap-0 divide-x divide-slate-100">
               {/* 오늘 */}

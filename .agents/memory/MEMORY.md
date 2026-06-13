@@ -1,0 +1,3 @@
+- [YAML colon-in-description](yaml-colon-desc.md) — OpenAPI YAML description values containing `: ` (colon-space) MUST be quoted or orval fails with "Failed to resolve input".
+- [Orval codegen clean risk](orval-clean-risk.md) — orval `clean: true` deletes output before generation; if generation fails, generated files are gone and frontend breaks.
+- [Orval config __dirname](orval-dirname.md) — orval v8 loads orval.config.ts in ESM context; `__dirname` may be undefined. Use `process.cwd()` or absolute paths for robustness.

@@ -22,12 +22,15 @@ import type {
   FireCauseStat,
   FirefighterDashboard,
   GetTodayAlertsParams,
+  GetWeatherCurrentParams,
+  GetWeatherForecastParams,
   HealthStatus,
   HourlyStatistic,
   MapDistrict,
   MonthlyStatistic,
   SeasonalStatistic,
   TodayRiskSummary,
+  WeatherCurrentResponse,
   WeatherForecast
 } from './api.schemas';
 
@@ -429,20 +432,27 @@ export function useGetTopDangerDistricts<TData = Awaited<ReturnType<typeof getTo
 
 
 
-export const getGetWeatherForecastUrl = () => {
+export const getGetWeatherCurrentUrl = (params?: GetWeatherCurrentParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/weather/forecast`
+  return stringifiedParams.length > 0 ? `/api/weather/current?${stringifiedParams}` : `/api/weather/current`
 }
 
 /**
- * @summary Get today and tomorrow weather forecast
+ * @summary Get current real-time weather (초단기실황)
  */
-export const getWeatherForecast = async ( options?: RequestInit): Promise<WeatherForecast> => {
+export const getWeatherCurrent = async (params?: GetWeatherCurrentParams, options?: RequestInit): Promise<WeatherCurrentResponse> => {
 
-  return customFetch<WeatherForecast>(getGetWeatherForecastUrl(),
+  return customFetch<WeatherCurrentResponse>(getGetWeatherCurrentUrl(params),
   {
     ...options,
     method: 'GET'
@@ -455,23 +465,107 @@ export const getWeatherForecast = async ( options?: RequestInit): Promise<Weathe
 
 
 
-export const getGetWeatherForecastQueryKey = () => {
+export const getGetWeatherCurrentQueryKey = (params?: GetWeatherCurrentParams,) => {
     return [
-    `/api/weather/forecast`
+    `/api/weather/current`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetWeatherForecastQueryOptions = <TData = Awaited<ReturnType<typeof getWeatherForecast>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeatherForecast>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetWeatherCurrentQueryOptions = <TData = Awaited<ReturnType<typeof getWeatherCurrent>>, TError = ErrorType<unknown>>(params?: GetWeatherCurrentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeatherCurrent>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetWeatherForecastQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetWeatherCurrentQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWeatherForecast>>> = ({ signal }) => getWeatherForecast({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWeatherCurrent>>> = ({ signal }) => getWeatherCurrent(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWeatherCurrent>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWeatherCurrentQueryResult = NonNullable<Awaited<ReturnType<typeof getWeatherCurrent>>>
+export type GetWeatherCurrentQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get current real-time weather (초단기실황)
+ */
+
+export function useGetWeatherCurrent<TData = Awaited<ReturnType<typeof getWeatherCurrent>>, TError = ErrorType<unknown>>(
+ params?: GetWeatherCurrentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeatherCurrent>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWeatherCurrentQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetWeatherForecastUrl = (params?: GetWeatherForecastParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/weather/forecast?${stringifiedParams}` : `/api/weather/forecast`
+}
+
+/**
+ * @summary Get today and tomorrow weather forecast (단기예보)
+ */
+export const getWeatherForecast = async (params?: GetWeatherForecastParams, options?: RequestInit): Promise<WeatherForecast> => {
+
+  return customFetch<WeatherForecast>(getGetWeatherForecastUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWeatherForecastQueryKey = (params?: GetWeatherForecastParams,) => {
+    return [
+    `/api/weather/forecast`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetWeatherForecastQueryOptions = <TData = Awaited<ReturnType<typeof getWeatherForecast>>, TError = ErrorType<unknown>>(params?: GetWeatherForecastParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeatherForecast>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWeatherForecastQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWeatherForecast>>> = ({ signal }) => getWeatherForecast(params, { signal, ...requestOptions });
 
 
 
@@ -485,15 +579,15 @@ export type GetWeatherForecastQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Get today and tomorrow weather forecast
+ * @summary Get today and tomorrow weather forecast (단기예보)
  */
 
 export function useGetWeatherForecast<TData = Awaited<ReturnType<typeof getWeatherForecast>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeatherForecast>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetWeatherForecastParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeatherForecast>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetWeatherForecastQueryOptions(options)
+  const queryOptions = getGetWeatherForecastQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

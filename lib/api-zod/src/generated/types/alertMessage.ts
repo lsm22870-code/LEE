@@ -16,6 +16,5 @@ export interface AlertMessage {
   category: string;
   targetAudience: AlertMessageTargetAudience;
   timeRange?: string;
-  /** @nullable */
   district?: string | null;
 }
