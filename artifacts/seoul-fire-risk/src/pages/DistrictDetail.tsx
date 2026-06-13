@@ -5,9 +5,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, Cell,
 } from "recharts";
-import { ArrowLeft, Thermometer, Wind, Droplets, CloudRain, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Thermometer, Wind, Droplets, CloudRain, CheckCircle2, Star, StarOff } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useMyDistrict } from "@/hooks/useMyDistrict";
 
 type RiskLevel = "관심" | "주의" | "경계" | "위험";
 
@@ -42,6 +43,8 @@ const SCORE_BREAKDOWN_LABELS = [
 export default function DistrictDetail() {
   const params = useParams<{ name: string }>();
   const name = decodeURIComponent(params.name ?? "");
+  const { myDistrict, setMyDistrict } = useMyDistrict();
+  const isMyDistrict = myDistrict === name;
 
   const { data: district, isLoading } = useGetRiskByDistrict(name, {
     query: { enabled: !!name, queryKey: getGetRiskByDistrictQueryKey(name) },
@@ -86,13 +89,31 @@ export default function DistrictDetail() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Back */}
-        <Link href="/map">
-          <Button variant="ghost" className="flex items-center gap-2 text-base pl-0">
-            <ArrowLeft className="w-5 h-5" />
-            지도로 돌아가기
+        {/* Back + My District */}
+        <div className="flex items-center justify-between">
+          <Link href="/map">
+            <Button variant="ghost" className="flex items-center gap-2 text-base pl-0">
+              <ArrowLeft className="w-5 h-5" />
+              지도로 돌아가기
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${
+              isMyDistrict
+                ? "border-yellow-400 text-yellow-600 bg-yellow-50 hover:bg-yellow-100"
+                : "text-slate-600 hover:border-yellow-400 hover:text-yellow-600"
+            }`}
+            onClick={() => setMyDistrict(isMyDistrict ? null : name)}
+          >
+            {isMyDistrict ? (
+              <><Star className="w-4 h-4 fill-yellow-400 text-yellow-400" /> 내 동네 해제</>
+            ) : (
+              <><StarOff className="w-4 h-4" /> 내 동네 설정</>
+            )}
           </Button>
-        </Link>
+        </div>
 
         {/* Hero */}
         <div
@@ -102,12 +123,17 @@ export default function DistrictDetail() {
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-4xl md:text-5xl font-extrabold">{district.name}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-4xl md:text-5xl font-extrabold">{district.name}</h2>
+                {isMyDistrict && (
+                  <Star className="w-7 h-7 fill-white text-white opacity-90 flex-shrink-0" />
+                )}
+              </div>
               <p className="text-xl mt-1 opacity-90">{district.mainFireType}</p>
             </div>
             <div className="text-right">
               <p className="text-6xl font-extrabold">{district.score}<span className="text-2xl">점</span></p>
-              <div className={`inline-block mt-1 px-4 py-1.5 rounded-full bg-white font-extrabold text-xl`} style={{ color: getRiskColor(level) }}>
+              <div className="inline-block mt-1 px-4 py-1.5 rounded-full bg-white font-extrabold text-xl" style={{ color: getRiskColor(level) }}>
                 {district.riskLevel}
               </div>
             </div>

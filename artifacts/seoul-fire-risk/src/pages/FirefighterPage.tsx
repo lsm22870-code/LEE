@@ -121,20 +121,24 @@ export default function FirefighterPage() {
 
         {/* Risk Type Breakdown */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <h3 className="text-xl font-extrabold text-slate-900 mb-4">화재위험 유형별 분포</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data.riskTypeBreakdown} layout="vertical" margin={{ left: 10, right: 20 }}>
+          <h3 className="text-xl font-extrabold text-slate-900 mb-4">화재위험 유형별 분포 (상위 8개)</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+              data={[...data.riskTypeBreakdown].sort((a, b) => b.count - a.count).slice(0, 8)}
+              layout="vertical"
+              margin={{ left: 10, right: 30, top: 4, bottom: 4 }}
+            >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 13 }} />
+              <XAxis type="number" tick={{ fontSize: 13 }} allowDecimals={false} />
               <YAxis
                 type="category"
                 dataKey="type"
-                width={160}
-                tick={{ fontSize: 12 }}
+                width={170}
+                tick={{ fontSize: 11 }}
               />
-              <Tooltip formatter={(v) => [`${v}개 지역`, "지역 수"]} />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                {data.riskTypeBreakdown.map((_, i) => (
+              <Tooltip formatter={(v) => [`${v}개 자치구`, "해당 지역 수"]} />
+              <Bar dataKey="count" radius={[0, 5, 5, 0]} barSize={22}>
+                {[...data.riskTypeBreakdown].sort((a, b) => b.count - a.count).slice(0, 8).map((_, i) => (
                   <Cell key={i} fill={PRIORITY_COLORS[i % PRIORITY_COLORS.length]} />
                 ))}
               </Bar>
