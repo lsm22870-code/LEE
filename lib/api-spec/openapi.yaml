@@ -3,13 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Seoul 119 Fire Risk Forecast API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: risk
+    description: Fire risk operations
+  - name: districts
+    description: District operations
+  - name: weather
+    description: Weather forecast operations
+  - name: alerts
+    description: Alert message operations
+  - name: statistics
+    description: Statistics operations
+  - name: map
+    description: Map data operations
 paths:
   /healthz:
     get:
@@ -24,6 +36,194 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /risk/today:
+    get:
+      operationId: getTodayRisk
+      tags: [risk]
+      summary: Get today's overall Seoul fire risk
+      responses:
+        "200":
+          description: Today's risk summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodayRiskSummary"
+
+  /risk/districts:
+    get:
+      operationId: getRiskDistricts
+      tags: [risk]
+      summary: Get fire risk for all 25 Seoul districts
+      responses:
+        "200":
+          description: List of district risks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DistrictRisk"
+
+  /risk/districts/{districtName}:
+    get:
+      operationId: getRiskByDistrict
+      tags: [risk]
+      summary: Get fire risk for a specific district
+      parameters:
+        - name: districtName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: District risk detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DistrictRiskDetail"
+        "404":
+          description: District not found
+
+  /risk/top-danger:
+    get:
+      operationId: getTopDangerDistricts
+      tags: [risk]
+      summary: Get top dangerous districts today
+      responses:
+        "200":
+          description: Top dangerous districts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DistrictRisk"
+
+  /weather/forecast:
+    get:
+      operationId: getWeatherForecast
+      tags: [weather]
+      summary: Get today and tomorrow weather forecast
+      responses:
+        "200":
+          description: Weather forecast
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherForecast"
+
+  /alerts/today:
+    get:
+      operationId: getTodayAlerts
+      tags: [alerts]
+      summary: Get today's fire prevention alerts
+      parameters:
+        - name: userType
+          in: query
+          schema:
+            type: string
+            enum: [citizen, firefighter]
+            default: citizen
+      responses:
+        "200":
+          description: Today's alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertMessage"
+
+  /statistics/monthly:
+    get:
+      operationId: getMonthlyStatistics
+      tags: [statistics]
+      summary: Get monthly fire statistics
+      responses:
+        "200":
+          description: Monthly fire statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyStatistic"
+
+  /statistics/hourly:
+    get:
+      operationId: getHourlyStatistics
+      tags: [statistics]
+      summary: Get hourly fire occurrence statistics
+      responses:
+        "200":
+          description: Hourly fire statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HourlyStatistic"
+
+  /statistics/causes:
+    get:
+      operationId: getFireCauseStatistics
+      tags: [statistics]
+      summary: Get fire cause breakdown statistics
+      responses:
+        "200":
+          description: Fire causes statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FireCauseStat"
+
+  /statistics/seasonal:
+    get:
+      operationId: getSeasonalStatistics
+      tags: [statistics]
+      summary: Get seasonal fire statistics
+      responses:
+        "200":
+          description: Seasonal fire stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SeasonalStatistic"
+
+  /map/districts:
+    get:
+      operationId: getMapDistricts
+      tags: [map]
+      summary: Get district map data with center coordinates and risk
+      responses:
+        "200":
+          description: District map data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MapDistrict"
+
+  /dashboard/firefighter:
+    get:
+      operationId: getFirefighterDashboard
+      tags: [risk]
+      summary: Get firefighter dashboard data
+      responses:
+        "200":
+          description: Firefighter dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FirefighterDashboard"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +234,291 @@ components:
       required:
         - status
 
+    RiskLevel:
+      type: string
+      enum: [관심, 주의, 경계, 위험]
+
+    TodayRiskSummary:
+      type: object
+      required: [overallScore, riskLevel, mainFireType, topRiskFactors, preventionMessage, date, highRiskDistrictCount]
+      properties:
+        overallScore:
+          type: integer
+          description: Overall Seoul fire risk score 0-100
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        mainFireType:
+          type: string
+        topRiskFactors:
+          type: array
+          items:
+            type: string
+        preventionMessage:
+          type: string
+        date:
+          type: string
+        highRiskDistrictCount:
+          type: integer
+
+    DistrictRisk:
+      type: object
+      required: [name, score, riskLevel, mainFireType, dangerTime, lat, lng]
+      properties:
+        name:
+          type: string
+        score:
+          type: integer
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        mainFireType:
+          type: string
+        dangerTime:
+          type: string
+        weatherFactor:
+          type: string
+        preventionMessage:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+
+    DistrictRiskDetail:
+      type: object
+      required: [name, score, riskLevel, mainFireType, dangerTime, weatherFactor, regionFactors, citizenAdvice, firefighterAdvice, lat, lng]
+      properties:
+        name:
+          type: string
+        score:
+          type: integer
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        mainFireType:
+          type: string
+        dangerTime:
+          type: string
+        weatherFactor:
+          type: string
+        regionFactors:
+          type: array
+          items:
+            type: string
+        citizenAdvice:
+          type: array
+          items:
+            type: string
+        firefighterAdvice:
+          type: array
+          items:
+            type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        scoreBreakdown:
+          $ref: "#/components/schemas/ScoreBreakdown"
+
+    ScoreBreakdown:
+      type: object
+      required: [historicalFrequency, regionalHistory, causePersistence, weatherRisk, regionRisk]
+      properties:
+        historicalFrequency:
+          type: integer
+        regionalHistory:
+          type: integer
+        causePersistence:
+          type: integer
+        weatherRisk:
+          type: integer
+        regionRisk:
+          type: integer
+
+    WeatherForecast:
+      type: object
+      required: [today, tomorrow]
+      properties:
+        today:
+          $ref: "#/components/schemas/DayForecast"
+        tomorrow:
+          $ref: "#/components/schemas/DayForecast"
+
+    DayForecast:
+      type: object
+      required: [date, temperature, maxTemp, minTemp, humidity, precipitationProb, windSpeed, skyCondition, isDry, isHeatwave, isColdwave, isStrongWind]
+      properties:
+        date:
+          type: string
+        temperature:
+          type: number
+        maxTemp:
+          type: number
+        minTemp:
+          type: number
+        humidity:
+          type: integer
+        precipitationProb:
+          type: integer
+        precipitation:
+          type: number
+        windSpeed:
+          type: number
+        windDirection:
+          type: string
+        skyCondition:
+          type: string
+        precipitationType:
+          type: string
+        isDry:
+          type: boolean
+        isHeatwave:
+          type: boolean
+        isColdwave:
+          type: boolean
+        isStrongWind:
+          type: boolean
+        riskFactors:
+          type: array
+          items:
+            type: string
+
+    AlertMessage:
+      type: object
+      required: [id, title, message, severity, category, targetAudience]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        severity:
+          $ref: "#/components/schemas/RiskLevel"
+        category:
+          type: string
+        targetAudience:
+          type: string
+          enum: [citizen, firefighter, all]
+        timeRange:
+          type: string
+        district:
+          type: ["string", "null"]
+
+    MonthlyStatistic:
+      type: object
+      required: [month, count, avgScore]
+      properties:
+        month:
+          type: integer
+        monthName:
+          type: string
+        count:
+          type: integer
+        avgScore:
+          type: number
+        season:
+          type: string
+
+    HourlyStatistic:
+      type: object
+      required: [hour, count, percentage]
+      properties:
+        hour:
+          type: integer
+        label:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+
+    FireCauseStat:
+      type: object
+      required: [cause, count, percentage]
+      properties:
+        cause:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+
+    SeasonalStatistic:
+      type: object
+      required: [season, count, mainCause, riskLevel]
+      properties:
+        season:
+          type: string
+        count:
+          type: integer
+        mainCause:
+          type: string
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+
+    MapDistrict:
+      type: object
+      required: [name, lat, lng, score, riskLevel]
+      properties:
+        name:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        score:
+          type: integer
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        mainFireType:
+          type: string
+        hasTraditionalMarket:
+          type: boolean
+        hasForestArea:
+          type: boolean
+        hasOldBuildings:
+          type: boolean
+
+    FirefighterDashboard:
+      type: object
+      required: [date, totalHighRiskAreas, priorityDistricts, riskTypeBreakdown, patrolRecommendations]
+      properties:
+        date:
+          type: string
+        totalHighRiskAreas:
+          type: integer
+        priorityDistricts:
+          type: array
+          items:
+            $ref: "#/components/schemas/DistrictRisk"
+        riskTypeBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskTypeCount"
+        patrolRecommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatrolRecommendation"
+
+    RiskTypeCount:
+      type: object
+      required: [type, count]
+      properties:
+        type:
+          type: string
+        count:
+          type: integer
+
+    PatrolRecommendation:
+      type: object
+      required: [district, priority, reason, action]
+      properties:
+        district:
+          type: string
+        priority:
+          type: integer
+        reason:
+          type: string
+        action:
+          type: string
+        timeRange:
+          type: string
